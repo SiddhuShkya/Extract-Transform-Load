@@ -4,7 +4,6 @@ from airflow.providers.http.hooks.http import HttpHook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.sdk import task
 
-## lat and lon of london
 LATITUDE = "51.5074"
 LONGITUDE = "-0.1278"
 
@@ -16,21 +15,16 @@ default_args = {"owner": "airflow", "retries": 3}
 with DAG(
     dag_id="weather_etl_pipeline",
     default_args=default_args,
-    start_date=pendulum.datetime(2026, 1, 1, tz="UTC"),
+    start_date=pendulum.datetime(2025, 1, 1, tz="UTC"),
     schedule="@daily",
     catchup=False,
 ) as dags:
 
     @task
     def extract_data():
-        """Extarct weather data from Open-Meteo API using Airflow Connection"""
-        # Use the http hook to get connection details from airflow connection
         http_hook = HttpHook(http_conn_id=API_CONN_ID, method="GET")
-        # build the end point
-        # https://api.open-meteo.com/v1/forecast?latitude=51.5074&longitude=-0.1278&current_weather=true
-        endpoint = f"/v1/forecast?latitude={LATITUDE}&longitude={LONGITUDE}&current_weather=true"
-        # Make the request via the http hook
-        response = http_hook.run(endpoint)
+        params = {"latitude": LATITUDE, "longitude": LONGITUDE, "current_weather": True}
+        response = http_hook.run(endpoint="/v1/forecast", data=params)
 
         if response.status_code == 200:
             return response.json()
@@ -39,8 +33,7 @@ with DAG(
 
     @task
     def transform_data(weather_data):
-        """Transform the extracted weather data"""
-        current_weather = weather_data["currrent_weatehr"]
+        current_weather = weather_data["current_weather"]
         transformed_data = {
             "latitude": LATITUDE,
             "longitude": LONGITUDE,
@@ -53,13 +46,9 @@ with DAG(
 
     @task
     def load_data(transformed_data):
-        """Load transformed data into PostgreSQL"""
         pg_hook = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID)
-        conn = pg_hook.get_conn()
-        cursor = conn.cursor()
-
-        # Create table if it doesnt exists
-        cursor.execute("""
+        # create table if not exists
+        pg_hook.run("""
         CREATE TABLE IF NOT EXISTS weather_data (
             latitude FLOAT,
             longitude FLOAT,
@@ -70,20 +59,14 @@ with DAG(
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         """)
-
-        # Insert the transformed data into the the postgresql table
-        cursor.execute(
+        # insert data
+        pg_hook.run(
             """
-        INSERT INTO weather_data (
-            latitude,
-            longitude,
-            temperature,
-            wind_speed,
-            wind_direction,
-            weather_code
-        ) VALUES (%s, %s, %s, %s, %s, %s)
-        """,
-            (
+            INSERT INTO weather_data (
+                latitude, longitude, temperature, wind_speed, wind_direction, weather_code
+            ) VALUES (%s, %s, %s, %s, %s, %s)
+            """,
+            parameters=(
                 transformed_data["latitude"],
                 transformed_data["longitude"],
                 transformed_data["temperature"],
@@ -93,10 +76,6 @@ with DAG(
             ),
         )
 
-        conn.commit()
-        cursor.close()
-
-    ## DAG Workflow - ETL Pipeline
     weather_data = extract_data()
-    transformed_data = transform_data(weather_data=weather_data)
-    load_data(transformed_data=transformed_data)
+    transformed_data = transform_data(weather_data)
+    load_data(transformed_data)

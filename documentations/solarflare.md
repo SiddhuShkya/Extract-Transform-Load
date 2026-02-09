@@ -1,4 +1,4 @@
-## ETL & Airflow Project
+## Solarflare ETL Pipeline
 
 In this guide, we will build our first end-to-end ETL pipeline using Apache Airflow. We will utilize Astronomer to develop, deploy, and orchestrate our DAGs (Directed Acyclic Graphs), ensuring our data pipeline runs reliably on a defined schedule.
 
