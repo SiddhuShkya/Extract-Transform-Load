@@ -23,20 +23,44 @@ A robust project demonstrating Automated ETL (Extract, Transform, Load) pipeline
 
 ---
 
-## 🏗️ Architecture
+## 🧩 Architecture Overview
+
+The pipeline is orchestrated using **Apache Airflow** (Astro Runtime) and uses **PostgreSQL** for data persistence. It consists of multiple DAGs that ingest data from scientific and environmental APIs.
 
 ```mermaid
-graph LR
-    NASA[NASA DONKI API] --> |JSON| Airflow1[Solar Flare DAG]
-    Weather[Open-Meteo API] --> |JSON| Airflow2[Weather DAG]
-    
-    subgraph Airflow Pipelines
-        Airflow1 --> T1[Transform & Clean]
-        Airflow2 --> T2[Transform & Clean]
+graph TD
+    subgraph "External Data Sources (Internet)"
+        NASA["NASA DONKI API (Solar Flare Data)"]
+        OpenMeteo["Open-Meteo API (Weather Data)"]
     end
-    
-    T1 --> DB[(PostgreSQL)]
-    T2 --> DB
+
+    subgraph "Docker Environment (Astro)"
+        subgraph "Airflow Environment"
+            DAG1["Solar Flare ETL DAG"]
+            DAG2["Weather ETL DAG"]
+            
+            subgraph "TaskFlow API Logic"
+                Extract["Extract (HttpOperator/Hook)"]
+                Transform["Transform (Python Logic)"]
+                Load["Load (PostgresHook)"]
+            end
+        end
+
+        subgraph "Database Layer"
+            Postgres[("PostgreSQL\n(Container: postgres_db)")]
+        end
+    end
+
+    NASA -->|HTTP GET| Extract
+    OpenMeteo -->|HTTP GET| Extract
+    Extract --> Transform
+    Transform --> Load
+    Load -->|SQL INSERT| Postgres
+
+    style NASA fill:#f9f,stroke:#333,stroke-width:2px
+    style OpenMeteo fill:#f9f,stroke:#333,stroke-width:2px
+    style Postgres fill:#69f,stroke:#333,stroke-width:2px
+    style Airflow Environment fill:#eee,stroke:#333,stroke-dasharray: 5 5
 ```
 
 ---
