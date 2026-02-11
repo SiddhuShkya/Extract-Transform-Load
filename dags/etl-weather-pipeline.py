@@ -7,7 +7,7 @@ from airflow.sdk import task
 LATITUDE = "51.5074"
 LONGITUDE = "-0.1278"
 
-POSTGRES_CONN_ID = "postgres_default"
+POSTGRES_CONN_ID = "my_postgres_connection"
 API_CONN_ID = "open_meteo_api"
 
 default_args = {"owner": "airflow", "retries": 3}
