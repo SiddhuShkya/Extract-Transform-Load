@@ -9,20 +9,6 @@ A robust project demonstrating Automated ETL (Extract, Transform, Load) pipeline
 
 ---
 
-## 🌟 Features
-
-### 1. ☀️ NASA Solar Flare Pipeline
-- **Extract**: Fetches solar flare event data (DONKI API) from NASA.
-- **Transform**: Automatically filters and cleans raw JSON responses to capture key metrics like class type, peak time, and active region numbers.
-- **Load**: Persists data into a PostgreSQL table with deduplication logic.
-
-### 2. 🌦️ Open-Meteo Weather Pipeline
-- **Extract**: Retrieves current weather data for specific coordinates using the Open-Meteo API.
-- **Transform**: Extracts temperature, wind speed, and weather codes into a clean relational format.
-- **Load**: Appends time-stamped weather records to a historical database.
-
----
-
 ## 🧩 Architecture Overview
 
 The pipeline is orchestrated using **Apache Airflow** (Astro Runtime) and uses **PostgreSQL** for data persistence. It consists of multiple DAGs that ingest data from scientific and environmental APIs.
@@ -62,6 +48,20 @@ graph TD
     style Postgres fill:#69f,stroke:#333,stroke-width:2px
     style Airflow Environment fill:#eee,stroke:#333,stroke-dasharray: 5 5
 ```
+
+---
+
+## 🌟 Features
+
+### 1. ☀️ NASA Solar Flare Pipeline
+- **Extract**: Fetches solar flare event data (DONKI API) from NASA.
+- **Transform**: Automatically filters and cleans raw JSON responses to capture key metrics like class type, peak time, and active region numbers.
+- **Load**: Persists data into a PostgreSQL table with deduplication logic.
+
+### 2. 🌦️ Open-Meteo Weather Pipeline
+- **Extract**: Retrieves current weather data for specific coordinates using the Open-Meteo API.
+- **Transform**: Extracts temperature, wind speed, and weather codes into a clean relational format.
+- **Load**: Appends time-stamped weather records to a historical database.
 
 ---
 
